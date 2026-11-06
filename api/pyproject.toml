@@ -1,0 +1,60 @@
+[project]
+name = "enclave-api"
+version = "0.1.0"
+description = "Enclave control plane: tenants, auth, cameras, stream tokens, media auth hook"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+  "fastapi>=0.120",
+  "uvicorn[standard]>=0.38",
+  "sqlalchemy[asyncio]>=2.0.44",
+  "asyncpg>=0.30",
+  "alembic>=1.17",
+  "pydantic>=2.12",
+  "pydantic-settings>=2.11",
+  "email-validator>=2.3",
+  "argon2-cffi>=25.1",
+  "pyjwt>=2.10",
+  "cryptography>=46",
+  "redis>=7.0",
+  "httpx>=0.28",
+  "prometheus-client>=0.23",
+]
+
+[dependency-groups]
+dev = [
+  "pytest>=8.4",
+  "pytest-asyncio>=1.2",
+  "ruff>=0.14",
+  "mypy>=1.18",
+]
+
+[tool.uv]
+package = false
+
+[tool.ruff]
+line-length = 110
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "S", "ASYNC", "RUF", "SIM"]
+ignore = ["B008"]  # FastAPI Depends() in defaults is idiomatic
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101", "S105", "S106", "E501"]
+"alembic/**" = ["E501", "S608"]  # SQL built only from module constants
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+plugins = ["pydantic.mypy"]
+exclude = ["alembic/", "tests/"]
+
+[[tool.mypy.overrides]]
+module = ["asyncpg.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "session"
+asyncio_default_test_loop_scope = "session"
+testpaths = ["tests"]
