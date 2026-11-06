@@ -1,0 +1,142 @@
+# Enclave local stack. `docker compose up -d --build`, then seed: see CLAUDE.md.
+name: enclave
+
+x-hardening: &hardening
+  security_opt: ["no-new-privileges:true"]
+  cap_drop: [ALL]
+  restart: unless-stopped
+
+services:
+  postgres:
+    build: { context: ., dockerfile: infra/postgres/Dockerfile }
+    <<: *hardening
+    user: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_SUPERUSER_PASSWORD:?}
+      POSTGRES_DB: postgres
+      ENCLAVE_OWNER_PASSWORD: ${ENCLAVE_OWNER_PASSWORD:?}
+      ENCLAVE_APP_PASSWORD: ${ENCLAVE_APP_PASSWORD:?}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports: ["127.0.0.1:55432:5432"]   # host access for pytest and migrations
+    networks: [data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d enclave"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+
+  redis:
+    image: redis:7.2.16-alpine3.21
+    <<: *hardening
+    user: redis
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD:?}"]
+    volumes: [redisdata:/data]
+    ports: ["127.0.0.1:56379:6379"]
+    networks: [data]
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" --no-auth-warning ping | grep PONG"]
+      interval: 3s
+      retries: 30
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?}
+
+  migrate:
+    build: { context: ., dockerfile: api/Dockerfile }
+    restart: "no"
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: [ALL]
+    command: ["alembic", "upgrade", "head"]
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://enclave_owner:${ENCLAVE_OWNER_PASSWORD}@postgres:5432/enclave
+    depends_on:
+      postgres: { condition: service_healthy }
+    networks: [data]
+
+  api:
+    build: { context: ., dockerfile: api/Dockerfile }
+    <<: *hardening
+    read_only: true
+    tmpfs: [/tmp]
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://enclave_app:${ENCLAVE_APP_PASSWORD}@postgres:5432/enclave
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
+      MEDIAMTX_PLAYBACK_URL: http://mediamtx:9996
+      MEDIAMTX_API_URL: http://mediamtx:9997
+      MEDIA_HOOK_ALLOWED_CIDRS: 172.31.250.0/24
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+      redis: { condition: service_healthy }
+    ports: ["127.0.0.1:8000:8000"]    # Vite dev proxy; /internal is still IP-restricted
+    networks:
+      data: {}
+      edge: {}
+      media:
+        aliases: [api-internal]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health').status==200 else 1)"]
+      interval: 5s
+      retries: 20
+
+  mediamtx:
+    build: { context: ., dockerfile: infra/mediamtx/Dockerfile }
+    <<: *hardening
+    user: "10001:10001"
+    read_only: true
+    environment:
+      MTX_AUTHHTTPADDRESS: http://api-internal:8000/internal/media/auth
+      MTX_WEBRTCADDITIONALHOSTS: ${WEBRTC_PUBLIC_HOST:-127.0.0.1}
+    ports:
+      - "8189:8189/udp"                 # WebRTC ICE media
+      - "8189:8189/tcp"                 # WebRTC ICE over TCP (fallback)
+      - "127.0.0.1:8889:8889"           # WHEP signalling for the Vite dev proxy
+      - "127.0.0.1:8888:8888"           # HLS for the Vite dev proxy
+    depends_on:
+      api: { condition: service_healthy }
+    networks:
+      edge: {}
+      media:
+        ipv4_address: 172.31.250.10
+
+  sim:
+    build: { context: ., dockerfile: sim/Dockerfile }
+    <<: *hardening
+    environment:
+      MEDIAMTX_RTSP: mediamtx:8554
+      SIM_PUBLISH_USER: ${SIM_PUBLISH_USER:?}
+      SIM_PUBLISH_PASS: ${SIM_PUBLISH_PASS:?}
+    volumes:
+      - sim-cache:/cache
+    depends_on: [mediamtx]
+    networks: [media]
+
+  caddy:
+    build:
+      context: .
+      dockerfile: infra/caddy/Dockerfile
+    <<: *hardening
+    cap_add: [NET_BIND_SERVICE]
+    ports: ["443:8443", "80:8080"]
+    volumes: [caddydata:/data]
+    depends_on: [api, mediamtx]
+    networks:
+      edge:
+        ipv4_address: 172.31.251.10
+
+networks:
+  data: {}
+  edge:
+    ipam:
+      config: [{ subnet: 172.31.251.0/24 }]
+  media:
+    ipam:
+      config: [{ subnet: 172.31.250.0/24 }]
+
+volumes:
+  pgdata: {}
+  redisdata: {}
+  caddydata: {}
+  sim-cache: {}
