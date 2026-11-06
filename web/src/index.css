@@ -1,0 +1,284 @@
+@import "tailwindcss";
+@import "@fontsource-variable/geist";
+@import "@fontsource-variable/geist-mono";
+@import "@fontsource-variable/fraunces";
+
+/*
+ * Enclave design tokens. Structure borrowed from PaySasa (hairline cards, one accent per screen,
+ * Fraunces display + Geist UI); palette changed for a control room: dark first because video reads
+ * best on dark, navy ink, a single amber accent for the primary action, red reserved for LIVE / REC
+ * and alarms. Fonts are self-hosted (strict CSP: font-src 'self').
+ */
+:root {
+  --bg: #f3f4f6;
+  --surface: #ffffff;
+  --surface-2: #eef0f3;
+  --surface-3: #e3e7ec;
+  --border: #e0e4e9;
+  --border-strong: #c3cad3;
+  --text: #0b1220;
+  --text-muted: #525d6c;
+  --text-subtle: #687382;
+
+  --ink: #0d1b2a;
+  --ink-2: #15283d;
+  --ink-3: #20405f;
+  --amber: #f5b742;
+  --amber-2: #e8a628;
+  --amber-soft: #fcf0d6;
+  --ink-on-amber: #241803;
+
+  --accent: #0d1b2a;
+  --accent-hover: #15283d;
+  --accent-soft: #e3e9f0;
+  --accent-fg: #ffffff;
+
+  --live: #d92d33;
+  --live-soft: #fde8e8;
+  --success: #17803d;
+  --success-soft: #e3f4e8;
+  --warning: #965200;
+  --warning-soft: #fbefdc;
+  --danger: #b42318;
+  --danger-soft: #fdebe9;
+  --info: #2251c2;
+  --info-soft: #e7eefc;
+  --focus: #0d1b2a;
+
+  --stage: #05080c; /* behind video, both themes */
+
+  --sh-1: 0 1px 2px rgb(11 18 32 / 0.06);
+  --sh-2: 0 1px 2px rgb(11 18 32 / 0.06), 0 12px 32px -8px rgb(11 18 32 / 0.2);
+  --sh-float: 0 2px 4px rgb(11 18 32 / 0.06), 0 24px 64px -12px rgb(11 18 32 / 0.3);
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  --bg: #070b11;
+  --surface: #0c121a;
+  --surface-2: #121a24;
+  --surface-3: #19232f;
+  --border: #1b2632;
+  --border-strong: #2a3949;
+  --text: #e7ecf2;
+  --text-muted: #9aa6b5;
+  --text-subtle: #808c9b;
+
+  --amber-soft: #2a2010;
+
+  --accent: #f5b742;
+  --accent-hover: #ffc75e;
+  --accent-soft: #241d10;
+  --accent-fg: #241803;
+
+  --live: #ff5a5f;
+  --live-soft: #3a1214;
+  --success: #4fd17f;
+  --success-soft: #0f2618;
+  --warning: #f2b54a;
+  --warning-soft: #2c210c;
+  --danger: #f6877c;
+  --danger-soft: #331512;
+  --info: #7fa8ff;
+  --info-soft: #142140;
+  --focus: #f5b742;
+
+  --sh-1: none;
+  --sh-2: 0 12px 32px -8px rgb(0 0 0 / 0.6);
+  --sh-float: 0 24px 64px -12px rgb(0 0 0 / 0.75);
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-fg: var(--text);
+  --color-muted: var(--text-muted);
+  --color-subtle: var(--text-subtle);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-amber: var(--amber);
+  --color-amber-2: var(--amber-2);
+  --color-amber-soft: var(--amber-soft);
+  --color-ink-on-amber: var(--ink-on-amber);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-fg: var(--accent-fg);
+  --color-live: var(--live);
+  --color-live-soft: var(--live-soft);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --color-stage: var(--stage);
+  --shadow-1: var(--sh-1);
+  --shadow-2: var(--sh-2);
+  --shadow-float: var(--sh-float);
+  --radius-input: 10px;
+  --radius-card: 16px;
+  --radius-sheet: 20px;
+  --font-sans: "Geist Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --font-display: "Fraunces Variable", ui-serif, Georgia, "Times New Roman", serif;
+  --font-mono: "Geist Mono Variable", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+
+::selection {
+  background: var(--amber);
+  color: var(--ink-on-amber);
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+.display {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-optical-sizing: auto;
+  letter-spacing: -0.025em;
+  line-height: 1.05;
+}
+
+.eyebrow {
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+}
+
+/* Faint monitor-wall grid for the sign-in hero. */
+.wall-grid {
+  background-image:
+    linear-gradient(to right, rgb(255 255 255 / 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(255 255 255 / 0.05) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+/* Film grain on dark brand surfaces (inline SVG data URI, allowed by img-src data:). */
+.grain {
+  isolation: isolate;
+}
+.grain::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0.16;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.55 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  z-index: -1;
+}
+
+/* Scanline sweep over a tile while it connects. */
+@keyframes scan {
+  from {
+    transform: translateY(-100%);
+  }
+  to {
+    transform: translateY(100%);
+  }
+}
+.scan::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, transparent, rgb(245 183 66 / 0.08) 50%, transparent);
+  animation: scan 1.8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes skeleton-pulse {
+  50% {
+    opacity: 0.5;
+  }
+}
+.skeleton {
+  background: var(--surface-2);
+  border-radius: 6px;
+  animation: skeleton-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+.animate-in {
+  animation: fade-in 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+}
+.pop-in {
+  animation: pop-in 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes pulse-dot {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in oklab, currentColor 50%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 5px transparent;
+  }
+}
+.pulse-dot {
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

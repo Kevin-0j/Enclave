@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="description" content="Enclave: live view, recordings and alerts for every camera across your sites." />
+    <meta name="color-scheme" content="dark light" />
+    <meta name="theme-color" content="#070b11" />
+    <!-- Per-request CSP nonce, filled in by Caddy templates (stays a literal placeholder in Vite dev). -->
+    <meta name="csp-nonce" content="{{placeholder `http.request.uuid`}}" />
+    <link rel="icon" href="/icons/icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <title>Enclave</title>
+    <!-- External, not inline: the CSP forbids inline scripts. Applies the saved theme before first paint. -->
+    <script src="/theme-init.js"></script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
