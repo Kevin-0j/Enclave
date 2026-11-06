@@ -1,0 +1,11 @@
+**/node_modules
+**/.venv
+**/__pycache__
+**/._*
+**/.DS_Store
+.git
+.env
+web/dist
+**/.pytest_cache
+**/.mypy_cache
+**/.ruff_cache
