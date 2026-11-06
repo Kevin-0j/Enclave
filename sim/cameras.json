@@ -1,0 +1,31 @@
+{
+  "_comment": "Fixed demo IDs shared by the simulator and api/app/seed.py. Media path: t/{tenant}/c/{camera}/{main|sub}.",
+  "tenants": [
+    {
+      "id": "0b9a3f0e-5a1c-4b8e-9d1a-1e5d6c7a8b01",
+      "slug": "mlima-residences",
+      "name": "Mlima Residences",
+      "kind": "Gated community · Kilimani",
+      "admin_email": "admin@mlima.demo",
+      "site": { "id": "4d1e6a2b-7c3f-4e9a-8b5d-2f6a7c8d9e01", "name": "Mlima Residences, Argwings Kodhek Rd", "timezone": "Africa/Nairobi" },
+      "cameras": [
+        { "id": "7f3c2a10-1b4d-4e6f-8a9b-0c1d2e3f4a01", "name": "Main gate", "scene": "gate", "motion_test": true },
+        { "id": "7f3c2a10-1b4d-4e6f-8a9b-0c1d2e3f4a02", "name": "Visitor parking", "scene": "parking" },
+        { "id": "7f3c2a10-1b4d-4e6f-8a9b-0c1d2e3f4a03", "name": "Block A lobby", "scene": "lobby" },
+        { "id": "7f3c2a10-1b4d-4e6f-8a9b-0c1d2e3f4a04", "name": "North perimeter", "scene": "perimeter" }
+      ]
+    },
+    {
+      "id": "0b9a3f0e-5a1c-4b8e-9d1a-1e5d6c7a8b02",
+      "slug": "ngong-road-offices",
+      "name": "Ngong Road Offices",
+      "kind": "Office park · Ngong Rd",
+      "admin_email": "admin@ngong.demo",
+      "site": { "id": "4d1e6a2b-7c3f-4e9a-8b5d-2f6a7c8d9e02", "name": "Ngong Road Offices, Block 3", "timezone": "Africa/Nairobi" },
+      "cameras": [
+        { "id": "7f3c2a10-1b4d-4e6f-8a9b-0c1d2e3f4b01", "name": "Reception", "scene": "lobby" },
+        { "id": "7f3c2a10-1b4d-4e6f-8a9b-0c1d2e3f4b02", "name": "Loading bay", "scene": "parking" }
+      ]
+    }
+  ]
+}

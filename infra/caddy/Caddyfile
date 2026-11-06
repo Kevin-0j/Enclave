@@ -1,0 +1,65 @@
+{
+	# Local development: Caddy's internal CA. In production replace with a real domain + ACME.
+	local_certs
+	admin off
+	http_port 8080
+	https_port 8443
+	# No trusted_proxies: Caddy is the edge, so any client-sent X-Forwarded-For is replaced, never
+	# trusted. The API relies on this when it checks where the media auth hook is called from.
+}
+
+(security_headers) {
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=()"
+		Cross-Origin-Opener-Policy "same-origin"
+		# Strict CSP: no inline scripts, fonts self-hosted, media only from this origin.
+		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'nonce-{http.request.uuid}'; img-src 'self' data: blob:; font-src 'self'; media-src 'self' blob:; connect-src 'self' wss://enclave.localhost; worker-src 'self'; manifest-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; object-src 'none'"
+		-Server
+	}
+}
+
+enclave.localhost {
+	import security_headers
+	encode zstd gzip
+
+	# The media auth hook and metrics are private-network only. Never route them.
+	@internal path /internal /internal/* /metrics /metrics/*
+	handle @internal {
+		respond 404
+	}
+
+	handle /api/* {
+		reverse_proxy api:8000
+	}
+
+	# WebRTC signalling (WHEP). ICE media goes over UDP 8189 straight to MediaMTX.
+	# MediaMTX answers with root-relative Locations (WHEP sessions, the HLS cookie check), so put
+	# the mount prefix back on the way out.
+	handle_path /media/* {
+		reverse_proxy mediamtx:8889 {
+			header_down Location "^/t/" "/media/t/"
+		}
+	}
+	handle_path /hls/* {
+		reverse_proxy mediamtx:8888 {
+			header_down Location "^/t/" "/hls/t/"
+		}
+	}
+
+	handle {
+		root * /srv/web
+		# index.html carries the per-request CSP nonce (same placeholder as the header above).
+		# try_files below rewrites every app route to /index.html before templates runs.
+		@shell path / /index.html
+		templates @shell
+		@immutable path /assets/*
+		header @immutable Cache-Control "public, max-age=31536000, immutable"
+		header /sw.js Cache-Control "no-cache"
+		try_files {path} /index.html
+		file_server
+	}
+}

@@ -1,0 +1,53 @@
+# Enclave cloud media node. MediaMTX 1.21.3. Keys verified against
+# https://mediamtx.org/docs/references/configuration-file (2026-11-06).
+logLevel: info
+logDestinations: [stdout]
+
+# Every publish/read/playback/api request is authorised by the Enclave API (ADR 0002).
+authMethod: http
+authHTTPAddress: http://api-internal:8000/internal/media/auth
+authHTTPExclude: []
+
+api: yes
+apiAddress: :9997
+metrics: yes
+metricsAddress: :9998
+
+rtsp: yes
+rtspAddress: :8554
+rtspTransports: [tcp]
+rtmp: no
+srt: yes
+srtAddress: :8890
+# Media over QUIC is on by default since 1.21; Enclave does not use it, so it stays closed.
+moq: no
+
+webrtc: yes
+webrtcAddress: :8889
+webrtcAllowOrigins: ["https://enclave.localhost", "http://localhost:5173"]
+webrtcLocalUDPAddress: :8189
+# ICE over TCP too: works through Docker VMs and networks that block UDP.
+webrtcLocalTCPAddress: :8189
+webrtcIPsFromInterfaces: no
+# webrtcAdditionalHosts is set from MTX_WEBRTCADDITIONALHOSTS in compose.
+
+hls: yes
+hlsAddress: :8888
+hlsAllowOrigins: ["https://enclave.localhost", "http://localhost:5173"]
+hlsVariant: lowLatency
+hlsAlwaysRemux: no
+
+playback: yes
+playbackAddress: :9996
+
+pathDefaults:
+  # Recording is switched on in M3 (record: yes, per-tenant retention).
+  record: no
+  recordPath: /recordings/%path/%Y-%m-%d_%H-%M-%S-%f_%z
+  recordFormat: fmp4
+  recordSegmentDuration: 10m
+  recordDeleteAfter: 7d
+
+paths:
+  # Only Enclave media paths exist. Anything else is refused before auth.
+  "~^t/[0-9a-f-]{36}/c/[0-9a-f-]{36}/(main|sub)$": {}
